@@ -1,20 +1,26 @@
+// middleware/auth.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError, ForbiddenError } from "../errors";
 
-export interface AuthRequest extends Request {
-  user?: {
-    userId: number;
-    email: string;
-    role: string;
-  };
+// Объявляем расширенный интерфейс
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: number;
+        email: string;
+        role: string;
+      };
+    }
+  }
 }
 
 /**
  * 🎯 JWT Authentication Middleware
  */
 export const authenticateToken = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -43,7 +49,7 @@ export const authenticateToken = async (
  * 🎯 Role-Based Access Control Middleware
  */
 export const requireRole = (allowedRoles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new UnauthorizedError("Требуется аутентификация");

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout"; // Импортируем Layout
 import Home from "./pages/Home";
 import FittingRoom from "./pages/FittingRoom";
 import Chat from "./pages/Chat";
@@ -7,11 +8,13 @@ import "./App.css";
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/fitting-room" element={<FittingRoom />} />
-        <Route path="/chat" element={<Chat />} />
-      </Routes>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/fitting-room" element={<FittingRoom />} />
+          <Route path="/chat" element={<Chat />} />
+        </Routes>
+      </Layout>
     </Router>
   );
 }

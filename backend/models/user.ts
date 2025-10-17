@@ -1,6 +1,7 @@
 // models/User.ts
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
+import { hashPassword } from "../utils/password";
 
 interface UserAttributes {
   id: number;
@@ -11,10 +12,15 @@ interface UserAttributes {
   updated_at: Date;
   status: string;
   role: string;
+  refresh_token?: string;
 }
 
+// Исправляем интерфейс создания
 interface UserCreationAttributes
-  extends Optional<UserAttributes, "id" | "created_at" | "updated_at"> {}
+  extends Optional<
+    UserAttributes,
+    "id" | "created_at" | "updated_at" | "refresh_token" | "status" | "role"
+  > {}
 
 class User
   extends Model<UserAttributes, UserCreationAttributes>
@@ -28,6 +34,25 @@ class User
   public updated_at!: Date;
   public status!: string;
   public role!: string;
+  public refresh_token?: string;
+
+  // Метод для проверки пароля
+  public async checkPassword(password: string): Promise<boolean> {
+    const { comparePassword } = await import("../utils/password");
+    return await comparePassword(password, this.password_hash);
+  }
+
+  // Метод для обновления refresh token
+  public async setRefreshToken(token: string | null): Promise<void> {
+    this.refresh_token = token || undefined;
+    await this.save();
+  }
+
+  // Метод для безопасного возврата пользователя (без пароля)
+  public toSafeJSON(): any {
+    const { password_hash, refresh_token, ...safeUser } = this.toJSON();
+    return safeUser;
+  }
 }
 
 User.init(
@@ -68,7 +93,7 @@ User.init(
       allowNull: false,
       defaultValue: "active",
       validate: {
-        isIn: [["active", "inactive"]],
+        isIn: [["active", "inactive", "banned"]],
       },
     },
     role: {
@@ -79,6 +104,10 @@ User.init(
         isIn: [["user", "manager", "admin"]],
       },
     },
+    refresh_token: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
   },
   {
     sequelize,
@@ -87,12 +116,25 @@ User.init(
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
+    hooks: {
+      beforeCreate: async (user: User) => {
+        user.password_hash = await hashPassword(user.password_hash);
+      },
+      beforeUpdate: async (user: User) => {
+        if (user.changed("password_hash")) {
+          user.password_hash = await hashPassword(user.password_hash);
+        }
+      },
+    },
     indexes: [
       {
         fields: ["email"],
       },
       {
         fields: ["status"],
+      },
+      {
+        fields: ["refresh_token"],
       },
     ],
   }

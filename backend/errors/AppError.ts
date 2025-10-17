@@ -1,3 +1,4 @@
+// errors.ts
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
@@ -33,6 +34,12 @@ export class ValidationError extends AppError {
 
 export class UnauthorizedError extends AppError {
   constructor(message: string = "Неавторизованный доступ", details?: any) {
+    super(message, 401, true, details);
+  }
+}
+
+export class AuthenticationError extends AppError {
+  constructor(message: string = "Ошибка аутентификации", details?: any) {
     super(message, 401, true, details);
   }
 }

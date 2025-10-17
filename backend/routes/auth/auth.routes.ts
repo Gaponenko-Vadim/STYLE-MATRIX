@@ -10,7 +10,13 @@ import {
   sendVerificationCode,
   logout,
   refreshToken,
+  getProfile,
+  protectedRoute,
 } from "../../controllers/authController";
+import {
+  authenticateToken,
+  requireRole,
+} from "../../middleware/authMiddleware";
 
 const router = Router();
 
@@ -30,5 +36,16 @@ router.post("/phone/verify", authWithPhone);
 // 🔄 Управление сессией
 router.post("/logout", logout);
 router.post("/refresh-token", refreshToken);
+
+// 👤 Защищенные маршруты
+router.get("/profile", authenticateToken, getProfile);
+router.get("/protected", authenticateToken, protectedRoute);
+router.get("/admin", authenticateToken, requireRole(["admin"]), (req, res) => {
+  res.json({
+    success: true,
+    message: "Добро пожаловать в админ-панель!",
+    user: req.user,
+  });
+});
 
 export default router;
