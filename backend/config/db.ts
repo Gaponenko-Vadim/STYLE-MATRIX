@@ -1,5 +1,8 @@
+// config/db.ts
 import { Sequelize } from "sequelize";
-require("dotenv").config();
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const sequelize = new Sequelize({
   database: process.env.DB_NAME,
@@ -11,4 +14,5 @@ const sequelize = new Sequelize({
   logging: process.env.NODE_ENV === "development" ? console.log : false,
 });
 
+// ✅ Правильный экспорт
 export default sequelize;

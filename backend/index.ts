@@ -2,8 +2,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import sequelize from "./config/db";
-import User from "./models/User";
 import { setupAssociations } from "./models/associations";
+import apiRoutes from "./routes";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler"; // ✅ ДОБАВЬ ИМПОРТ
+import User from "./models/User";
+import Type from "./models/Type";
+import Brand from "./models/Brand";
 
 dotenv.config();
 
@@ -14,53 +18,60 @@ app.use(express.json());
 // Подключение к БД
 sequelize
   .authenticate()
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.error("Database connection error:", err));
+  .then(() => console.log("✅ База данных подключена"))
+  .catch((err) => console.error("❌ Ошибка подключения к БД:", err));
 
-sequelize.sync({ force: false }).then(() => console.log("DB synced"));
-setupAssociations();
-console.log("Database associations setup complete");
+sequelize
+  .sync({ force: false })
+  .then(() => console.log("✅ Модели синхронизированы"))
+  .then(async () => {
+    // Создаем тестового пользователя если его нет
+    const [user, userCreated] = await User.findOrCreate({
+      where: { id: 1 },
+      defaults: {
+        name: "Test User",
+        email: "test@example.com",
+        password_hash: "temp_hash_123",
+        status: "active",
+        role: "user",
+      },
+    });
 
-// Простые роуты без валидации
-app.post("/api/register", async (req, res) => {
-  try {
-    const user = await User.create(req.body);
-    res.json({ success: true, user });
-  } catch (error) {
-    res.status(500).json({ error: "Registration failed" });
-  }
-});
+    // ✅ СОЗДАЕМ ТИП ОДЕЖДЫ
+    const [type, typeCreated] = await Type.findOrCreate({
+      where: { id: 1 },
+      defaults: {
+        name: "Футболка",
+      },
+    });
 
-app.post("/api/login", async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
+    // ✅ СОЗДАЕМ БРЕНД
+    const [brand, brandCreated] = await Brand.findOrCreate({
+      where: { id: 1 },
+      defaults: {
+        name: "Nike",
+      },
+    });
 
-    if (user) {
-      res.json({ success: true, user });
-    } else {
-      res.status(404).json({ error: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: "Login failed" });
-  }
-});
+    console.log("✅ Тестовые данные созданы:");
+    console.log("   Пользователь:", user.id);
+    console.log("   Тип одежды:", type.id, type.name);
+    console.log("   Бренд:", brand.id, brand.name);
+  })
+  .catch((err) => console.error("❌ Ошибка синхронизации:", err));
+// Подключаем роутеры
+app.use("/api", apiRoutes);
 
-app.get("/api/users/:id", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-
-    if (user) {
-      res.json({ success: true, user });
-    } else {
-      res.status(404).json({ error: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
+// ✅ НА НАШИ MIDDLEWARE:
+app.use(notFoundHandler); // 404 ошибки
+app.use(errorHandler); // Все остальные ошибки
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(
+    `📍 Регистрация: http://localhost:${PORT}/api/auth/register/email`
+  );
+  console.log(`📍 Логин: http://localhost:${PORT}/api/auth/login/email`);
 });

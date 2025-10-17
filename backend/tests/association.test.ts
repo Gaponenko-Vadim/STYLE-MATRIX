@@ -1,0 +1,64 @@
+// tests/api.test.ts
+import request from "supertest";
+import express from "express";
+import apiRoutes from "../routes";
+
+const app = express();
+app.use(express.json());
+app.use("/api", apiRoutes);
+
+describe("API Endpoints Tests", () => {
+  describe("Health Check", () => {
+    test("GET /api/health should return 200", async () => {
+      const response = await request(app).get("/api/health").expect(200);
+
+      expect(response.body).toEqual({
+        status: "OK",
+        message: "Илья ,я это сделал",
+        timestamp: expect.any(String),
+        version: "1.0.0",
+      });
+    });
+  });
+
+  describe("Authentication API", () => {
+    test("POST /api/auth/register/email should create user", async () => {
+      const userData = {
+        email: "test@example.com",
+        password: "123456",
+        name: "Test User",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/register/email")
+        .send(userData)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.email).toBe(userData.email);
+      expect(response.body.data.user.name).toBe(userData.name);
+      expect(response.body.data.token).toBeDefined();
+    });
+
+    test("POST /api/auth/register/email should return validation error", async () => {
+      const response = await request(app)
+        .post("/api/auth/register/email")
+        .send({ email: "" })
+        .expect(400);
+
+      // Убрал проверку на success, так как в ошибках его может не быть
+      expect(response.body.error).toBe("ValidationError");
+      expect(response.body.message).toBeDefined();
+    });
+  });
+
+  describe("Error Handling", () => {
+    test("Should return 404 for non-existent route", async () => {
+      const response = await request(app).get("/api/nonexistent").expect(404);
+
+      // Убрал проверку на success
+      expect(response.body.error).toBe("NotFoundError");
+      expect(response.body.message).toBeDefined();
+    });
+  });
+});
