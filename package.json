@@ -1,0 +1,28 @@
+{
+  "name": "style-matrix",
+  "version": "1.0.0",
+  "description": "Full-stack fashion technology platform with virtual 3D fitting room",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "test": "cd backend && npm test"
+  },
+  "keywords": [
+    "fashion",
+    "3d",
+    "fitting-room",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@playwright/mcp": "^0.0.43",
+    "playwright": "^1.57.0-alpha-2025-10-16"
+  }
+}

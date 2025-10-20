@@ -25,8 +25,8 @@ export const authenticateToken = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
+    // Получаем токен из cookie вместо заголовка Authorization
+    const token = req.cookies.accessToken;
 
     if (!token) {
       throw new UnauthorizedError("Токен доступа не предоставлен");

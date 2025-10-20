@@ -50,8 +50,12 @@ class User
 
   // Метод для безопасного возврата пользователя (без пароля)
   public toSafeJSON(): any {
-    const { password_hash, refresh_token, ...safeUser } = this.toJSON();
-    return safeUser;
+    const { id, password_hash, refresh_token, ...safeUser } = this.toJSON();
+    // Переименовываем id в userId для согласованности с frontend
+    return {
+      userId: id,
+      ...safeUser,
+    };
   }
 }
 

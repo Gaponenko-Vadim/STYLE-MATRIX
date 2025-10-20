@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import sequelize from "./config/db";
 import { setupAssociations } from "./models/associations";
@@ -9,8 +10,17 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS с поддержкой credentials для cookies
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5174",
+    credentials: true, // Разрешаем отправку cookies
+  })
+);
+
 app.use(express.json());
+app.use(cookieParser()); // Добавляем cookie-parser
 
 // Подключение к БД
 sequelize
@@ -21,10 +31,16 @@ sequelize
 // Настройка ассоциаций
 setupAssociations();
 
-sequelize
-  .sync({ force: false })
-  .then(() => console.log("✅ Модели синхронизированы"))
-  .catch((err) => console.error("❌ Ошибка синхронизации:", err));
+// Отключаем автоматическую синхронизацию таблиц
+// В production используйте миграции вместо sync
+if (process.env.NODE_ENV === "development" && process.env.DB_SYNC === "true") {
+  sequelize
+    .sync({ alter: false, force: false })
+    .then(() => console.log("✅ Модели синхронизированы"))
+    .catch((err) => console.error("❌ Ошибка синхронизации:", err));
+} else {
+  console.log("⚡ Синхронизация отключена. Используйте миграции для изменения схемы БД.");
+}
 
 // Подключаем роутеры
 app.use("/api", apiRoutes);

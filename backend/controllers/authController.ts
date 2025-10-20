@@ -44,13 +44,26 @@ export const registerWithEmail = asyncHandler(
     // Сохраняем refresh token в базе
     await user.setRefreshToken(tokens.refreshToken);
 
+    // Устанавливаем токены в httpOnly cookies
+    res.cookie("accessToken", tokens.accessToken, {
+      httpOnly: true, // Недоступно для JavaScript
+      secure: process.env.NODE_ENV === "production", // HTTPS в production
+      sameSite: "strict", // Защита от CSRF
+      maxAge: 15 * 60 * 1000, // 15 минут
+    });
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+    });
+
     res.status(201).json({
       success: true,
       message: "Пользователь успешно зарегистрирован",
       data: {
         user: user.toSafeJSON(),
-        token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
       },
     });
   }
@@ -94,13 +107,26 @@ export const loginWithEmail = asyncHandler(
     // Сохраняем refresh token в базе
     await user.setRefreshToken(tokens.refreshToken);
 
+    // Устанавливаем токены в httpOnly cookies
+    res.cookie("accessToken", tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 минут
+    });
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+    });
+
     res.status(200).json({
       success: true,
       message: "Успешный вход в систему",
       data: {
         user: user.toSafeJSON(),
-        token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
       },
     });
   }
@@ -111,7 +137,8 @@ export const loginWithEmail = asyncHandler(
  */
 export const refreshToken = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { refresh_token } = req.body;
+    // Получаем refresh token из cookie
+    const refresh_token = req.cookies.refreshToken;
 
     if (!refresh_token) {
       throw new ValidationError("Refresh token обязателен");
@@ -143,13 +170,24 @@ export const refreshToken = asyncHandler(
       // Обновляем refresh token в базе
       await user.setRefreshToken(tokens.refreshToken);
 
+      // Устанавливаем новые токены в cookies
+      res.cookie("accessToken", tokens.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
+
+      res.cookie("refreshToken", tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
       res.status(200).json({
         success: true,
         message: "Токен успешно обновлен",
-        data: {
-          token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-        },
       });
     } catch (error) {
       throw new UnauthorizedError("Недействительный refresh token");
@@ -162,7 +200,7 @@ export const refreshToken = asyncHandler(
  */
 export const logout = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { refresh_token } = req.body;
+    const refresh_token = req.cookies.refreshToken;
 
     if (refresh_token) {
       // Находим пользователя по refresh token и очищаем его
@@ -171,6 +209,10 @@ export const logout = asyncHandler(
         await user.setRefreshToken(null);
       }
     }
+
+    // Очищаем cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
 
     res.status(200).json({
       success: true,

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "agent-Saha-Novichkov",
+      "mcp__playwright",
+      "mcp__playwright__take_screenshot",
+      "mcp__playwright__navigate_to_url",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__*"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["playwright"]
+}

@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout"; // Импортируем Layout
-import Home from "./pages/Home";
+import Home from "./pages/Home/index";
 import FittingRoom from "./pages/FittingRoom";
 import Chat from "./pages/Chat";
 import "./App.css";
